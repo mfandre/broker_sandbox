@@ -4,19 +4,26 @@ import logging
 logger = logging.getLogger()
 
 class NotificationService(ABC):
+    configed:bool = False
+
+    def __init__(self):
+        self.configed = False
+
     @abstractmethod
     def notify(self):
         """
         Método abstrato para enviar a notificação.
         """
-        pass
+        if not self.configed:
+            raise RuntimeError("A notificação não foi configurada. Chame o método 'config' antes de enviar.")
+        print("Enviando notificação...")
 
     @abstractmethod
     def config(self):
         """
         Método abstrato para configurar a notificação (por exemplo, definir destinatários, mensagens, etc.).
         """
-        pass
+        self.configed = True
 
 # Exemplo de implementação para notificação por e-mail
 class EmailNotificationService(NotificationService):
@@ -31,11 +38,13 @@ class EmailNotificationService(NotificationService):
         self.__body = body
 
     def notify(self):
+        super().notify()  # Chama o método da classe base
         # Lógica para enviar e-mail
         logger.info(f"Enviando e-mail... {self.__to}")
         
 
     def config(self):
+        super().config()
         # Lógica para configurar e-mail
         logger.info("Configurando e-mail...")
 
@@ -49,10 +58,12 @@ class TelegramNotificationService(NotificationService):
         self.__msg = msg
 
     def notify(self):
+        super().notify()  # Chama o método da classe base
         # Lógica para enviar telegram
         logger.info(f"Enviando telegram... {self.__phone_number}")
 
     def config(self):
+        super().config()
         # Lógica para configurar telegram
         logger.info("Configurando telegram...")
 
