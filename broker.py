@@ -25,27 +25,6 @@ class Payload(JsonObject):
     def __repr__(self) -> str:
         return self.to_json_string()
 
-# class BrokerInternalMessage(dict):
-#     pqid:int
-#     data:Payload
-#     timestamp:float
-
-#     def __init__(self,  pqid:int, data:Payload, timestamp:float) -> None:
-#         if pqid:
-#             self.pqid = pqid
-#         else:
-#             self.pqid = self["pqid"]
-
-#         if data:
-#             self.data = data
-#         else:
-#             self.data = self["data"]
-
-#         if timestamp:
-#             self.timestamp = timestamp
-#         else:
-#             self.timestamp = self["timestamp"]
-
 class Broker:
     q:SQLiteAckQueue = None
     do_work_func:None
@@ -60,7 +39,6 @@ class Broker:
             t = Thread(target=self.worker)
             t.daemon = True
             t.start()
-        #self.worker()
             
     def __main_thread_is_alive(self):
         return main_thread().is_alive()

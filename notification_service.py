@@ -10,7 +10,7 @@ class NotificationService(ABC):
         self.configed = False
 
     @abstractmethod
-    def notify(self):
+    def notify(self, str:str):
         """
         Método abstrato para enviar a notificação.
         """
@@ -19,7 +19,7 @@ class NotificationService(ABC):
         print("Enviando notificação...")
 
     @abstractmethod
-    def config(self):
+    def config(self, *args, **kwargs):
         """
         Método abstrato para configurar a notificação (por exemplo, definir destinatários, mensagens, etc.).
         """
@@ -27,23 +27,29 @@ class NotificationService(ABC):
 
 # Exemplo de implementação para notificação por e-mail
 class EmailNotificationService(NotificationService):
-    __from:str
-    __to:str
-    __body:str
-    __subject:str
+    __server:str
+    __port:str
+    __user:str
+    __pass:str
+    __email_from:str
 
-    def __init__(self, to, subject, body):
+    def __init__(self, email_from:str, to:str, server:str, port:str, user:str, password:str):
+        self.__server = server
+        self.__port = port
+        self.__user = user
+        self.__pass = password
+        self.__email_from = email_from
         self.__to = to
-        self.__subject = subject
-        self.__body = body
 
-    def notify(self):
-        super().notify()  # Chama o método da classe base
+    def notify(self, msg:str):
+        super().notify(msg)  # Chama o método da classe base
         # Lógica para enviar e-mail
-        logger.info(f"Enviando e-mail... {self.__to}")
+        body = msg
+        subject = "Alerting"
+        logger.info(f"Enviando e-mail... {subject} {body}")
         
 
-    def config(self):
+    def config(self, *args, **kwargs):
         super().config()
         # Lógica para configurar e-mail
         logger.info("Configurando e-mail...")
@@ -51,19 +57,19 @@ class EmailNotificationService(NotificationService):
 # Exemplo de implementação para notificação por e-mail
 class TelegramNotificationService(NotificationService):
     __phone_number:str
-    __msg:str
 
-    def __init__(self, phone_number:str, msg:str):
-        self.__phone_number = phone_number
-        self.__msg = msg
+    def __init__(self, phone_number):
+        self.config(phone_number=phone_number)
 
-    def notify(self):
-        super().notify()  # Chama o método da classe base
+    def notify(self, msg:str):
+        super().notify(msg)  # Chama o método da classe base
         # Lógica para enviar telegram
-        logger.info(f"Enviando telegram... {self.__phone_number}")
+        logger.info(f"Enviando telegram... {self.__phone_number} {msg}")
 
-    def config(self):
+    def config(self, *args, **kwargs):
         super().config()
+        
+        self.__phone_number = kwargs["phone_number"]
         # Lógica para configurar telegram
         logger.info("Configurando telegram...")
 

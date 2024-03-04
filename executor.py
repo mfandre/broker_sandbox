@@ -14,7 +14,7 @@ class Executor:
     __dlq_broker:Broker = None
     __task:TaskService
     __notification:NotificationService
-
+    __max_retries:int = 1
     def __init__(self,task_service, notification_service) -> None:
         self.__main_broker = Broker("main",self.main_consumer, 1)
         self.__retry_broker = Broker("retry",self.retry_consumer, 1)
@@ -50,7 +50,9 @@ class Executor:
             # print(f"----- start -----\nDoing work: {type(item)} {str(item)}\n----- end -----")
             logger.info(f"----- start -----\nDoing work ({msg.retry}): {type(item)} {str(item)}\n----- end -----")
             
-            self.__task.exec(msg)
+            if self.__task.schema_is_valid(msg.data):
+                self.__task.exec(msg.data)
+                raise KeyError("Schema is not Valid")
             # if randint(0,100) <= 100: # randomizing error... 80% chance to error to test exponential backoff
             #     broker.ack_failed(item)
             #     if msg.retry < 3:
@@ -61,9 +63,13 @@ class Executor:
             
             broker.ack(item)
             logger.info(f"item acked: {str(item)}")
-        except:
+        except KeyError as ke:
+            logger.exception(ke)
+            self.__dlq_broker.add(msg)
+        except Exception as e:
+            logger.exception(e)
             broker.ack_failed(item)
-            if msg.retry < 3:
+            if msg.retry < self.__max_retries:
                 self.__retry_broker.add(msg)
             else:
                 self.__dlq_broker.add(msg)
@@ -103,11 +109,11 @@ class Executor:
             msg:Payload = item["data"]
             # print(f"----- start -----\nDLQ work: {type(item)} {str(item)}\n----- end -----")
             logger.info(f"----- start -----\nDLQ work ({msg.retry}): {type(item)} {str(item)}\n----- end -----")
-            self.__notification.notify()
+            self.__notification.notify(msg=f"DLQ ({msg.retry}): {str(item)}")
             # msg.retry
             #broker.ack_failed(item)
             #broker.nack(item)
-            #broker.ack(item)
+            broker.ack(item)
         except Exception as e:
             broker.nack(item)
             logger.exception(e)
